@@ -1,1 +1,13 @@
+# secrets
 .env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# raw attack output
+artifacts/results/*
+
+# allow directory to exist
+!artifacts/results/.gitkeep
