@@ -16,59 +16,66 @@ The goal is to provide a **repeatable environment for learning and practicing AI
 ## Repository structure
 ```bash
 AI-security-training-lab/
-├── README.md
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
+├── README.md 
 ├── LICENSE
+├── .gitignore
+├── .env.example
+├── docker-compose.yml # chatbot + rag-pipeline + agent
 │
 ├── environments/
-│   ├── chatbot/
-│   ├── rag-pipeline/
-│   ├── agent/
-│   └── admin-panel/
-│
-├── methodology/
-│   ├── attack-surface-map.md
-│   ├── threat-model.md
-│   ├── testing-phases.md
-│   └── rules-of-engagement.md
-│
-├── playbooks/
-│   ├── LLM01-prompt-injection.md
-│   ├── LLM02-insecure-output.md
-│   ├── LLM03-data-poisoning.md
-│   ├── LLM06-sensitive-disclosure.md
-│   ├── LLM07-plugin-insecurity.md
-│   ├── LLM08-excessive-agency.md
-│   └── chains/
-│       ├── chain-01-rag-exfil.md
-│       ├── chain-02-agent-escalation.md
-│       └── chain-03-memory-poison.md
+│ ├── chatbot/
+│ │ ├── app.py
+│ │ ├── Dockerfile
+│ │ ├── requirements.txt
+│ │ ├── prompts/
+│ │ └── memory/ # Bind-mounted JSONL session store
+│ │
+│ ├── rag-pipeline/
+│ │ ├── ingest.py
+│ │ ├── rag_api.py
+│ │ ├── Dockerfile
+│ │ └── requirements.txt
+│ │
+│ └── agent/
+│ ├── agent.py
+│ ├── Dockerfile
+│ ├── requirements.txt
+│ └── tools/ # web_search.py + .schema.json
 │
 ├── attacks/
-│   ├── prompt-injection/
-│   ├── jailbreaks/
-│   ├── system-prompt-extraction/
-│   ├── rag-attacks/
-│   └── agent-attacks/
+│ ├── README.md # Schema + ID prefix table (single source of truth)
+│ ├── prompt-injection/
+│ │ ├── payloads.json # Covers: direct, indirect, jailbreak, SPE
+│ │ └── payloads.md
+│ │
+│ ├── rag-attacks/
+│ │ ├── payloads.json
+│ │ └── payloads.md
+│ │
+│ └── agent-attacks/
+│ ├── payloads.json
+│ └── payloads.md
 │
-├── evidence/
-│   ├── transcripts/
-│   ├── screenshots/
-│   ├── logs/
-│   └── collect_evidence.py
+├── tools/
+│ ├── fuzzer.py # payloads.json → artifacts/results/
+│ └── collect_evidence.py # artifacts/results/ → evidence/transcripts/
 │
-├── reports/
-│   ├── templates/
-│   ├── findings/
-│   └── retest/
+├── playbooks/
+│ ├── LLM01-prompt-injection.md
+│ ├── LLM03-training-data-poisoning.md
+│ ├── LLM08-excessive-agency.md
+│ └── chains/
+│ ├── chain-01-rag-exfiltration.md
+│ └── chain-02-agent-escalation.md
 │
-└── tools/
-    ├── fuzzer.py
-    ├── extractor.py
-    ├── rag_poisoner.py
-    └── agent_probe.py
+├── methodology/
+│ └── attack-surface-map.md # OWASP coverage matrix
+│
+├── artifacts/
+│ └── results/ # Raw run outputs from the fuzzer
+│
+└── evidence/
+└── transcripts/ # Curated evidence extracted from artifacts
 
 ```
 ---
