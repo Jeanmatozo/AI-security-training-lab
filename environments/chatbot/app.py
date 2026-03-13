@@ -3,6 +3,11 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
 import os
+from dotenv import load_dotenv
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT_DIR / ".env")
 
 app = FastAPI()
 
