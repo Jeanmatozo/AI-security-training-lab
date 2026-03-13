@@ -98,12 +98,24 @@ Example:
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
 ```
-**4. Run the environment**
+**4. Run the Vulnerable Chatbot environment**  
+Navigate to the chatbot environment:
 ```bash
 cd environments/chatbot
+```
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+Start the server:
+```bash
 uvicorn app:app --reload
 ```
-  This will launch a vulnerable chatbot environment that can be used to practice prompt injection and system prompt extraction attacks.
+Open your browser and go to(it will open the API interface):
+```bash
+http://127.0.0.1:8000/docs
+```
+  This will launch a vulnerable chatbot environment, a FastAPI interactive Swagger UI,  that can be used to practice prompt injection and system prompt extraction attacks.
 
 ## Docker Setup
 The lab can also be run using Docker, which provides a consistent and isolated environment.
