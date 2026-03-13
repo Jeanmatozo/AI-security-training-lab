@@ -98,10 +98,10 @@ Example:
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
 ```
-**4. Run a lesson or lab environment**
-Example:
+**4. Run the environment**
 ```bash
-python environments/chatbot/app.py
+cd environments/chatbot
+uvicorn app:app --reload
 ```
   This will launch a vulnerable chatbot environment that can be used to practice prompt injection and system prompt extraction attacks.
 
