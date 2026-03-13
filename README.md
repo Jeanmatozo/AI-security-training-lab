@@ -74,40 +74,36 @@ AI-security-training-lab/
 ---
 
 ## Quickstart
-
 The quickest way to begin is to clone the repository and run one of the lab environments.
 
 ## Clone the repository
-
 ```bash
 git clone https://github.com/YOUR-USERNAME/AI-security-training-lab.git
 cd AI-security-training-lab
 ```
 ## Local Setup   
-1. Install dependencies
+**1. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
-✅ Some environments may include their own requirements files.
-
-2. Configure your environment
+**2. Configure your environment**
 Create a .env file based on the example template.
 ```bash
 cp .env.example .env
 ```
-3. Add your OpenAI API Key
+**3. Add your OpenAI API Key**
 Edit the .env file and add your API key.
 Example:
 ```bash
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
 ```
-4. Run a lesson or lab environment
+**4. Run a lesson or lab environment**
 Example:
 ```bash
 python environments/chatbot/app.py
 ```
-✅ This will launch a vulnerable chatbot environment that can be used to practice prompt injection and system prompt extraction attacks.
+  This will launch a vulnerable chatbot environment that can be used to practice prompt injection and system prompt extraction attacks.
 
 ## Docker Setup
 The lab can also be run using Docker, which provides a consistent and isolated environment.
@@ -127,17 +123,12 @@ This will start all configured lab environments including:
 
 ---
 ### Lab Topics Covered
-This training lab includes exercises for:
-### Prompt Injection
-Direct and indirect prompt injection attacks.
-### RAG Exploitation
-Manipulating retrieval pipelines and poisoning documents.
-### System Prompt Extraction
-Techniques used to recover hidden system prompts.
-### Agent Tool Abuse
-Attacking tool-enabled agents through tool misuse and privilege escalation.
-### Multi-Step Attack Chains
-Simulating realistic adversarial workflows across AI systems.
+This training lab includes exercises for:   
+- **Prompt Injection** - Direct and indirect prompt injection attacks.   
+- **RAG Exploitation** - Manipulating retrieval pipelines and poisoning documents.   
+- **System Prompt Extraction** - Techniques used to recover hidden system prompts.   
+- **Agent Tool Abuse** - Attacking tool-enabled agents through tool misuse and privilege escalation.   
+- **Multi-Step Attack Chains** - Simulating realistic adversarial workflows across AI systems.   
 
 ---
 ## Tools Used
