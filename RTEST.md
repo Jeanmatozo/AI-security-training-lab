@@ -129,35 +129,106 @@ Raw artifacts stay in `artifacts/results/` until reviewed and promoted.
 ---
 
 ## Quickstart
+
+### Clone the repository
 ```bash
 git clone https://github.com/Jeanmatozo/AI-security-training-lab.git
 cd AI-security-training-lab
 ```
 
 ### Option 1 — Docker (recommended)
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+(macOS / Windows) or Docker Engine (Linux), running before you continue.
+
+**1. Copy and configure the environment file**
 ```bash
 cp .env.example .env
-# Add your OPENAI_API_KEY to .env
+```
+
+Open `.env` and set your API key before starting the containers:
+```bash
+OPENAI_API_KEY=your_api_key_here
+MODEL_NAME=gpt-4.1-mini
+```
+
+**2. Build and start all environments**
+```bash
 docker-compose up --build
 ```
 
-Starts all three lab environments:
-- Vulnerable chatbot — `http://localhost:8000`
-- RAG pipeline — `http://localhost:8001`
-- AI agent — `http://localhost:8002`
+When all three services are ready you will see lines similar to:
+```
+chatbot      | INFO:     Uvicorn running on http://0.0.0.0:8000
+rag-pipeline | INFO:     Uvicorn running on http://0.0.0.0:8001
+agent        | INFO:     Uvicorn running on http://0.0.0.0:8002
+```
 
-### Option 2 — Local (single environment)
+The three lab environments are now running at:
+
+- Chatbot — `http://localhost:8000/docs`
+- RAG pipeline — `http://localhost:8001/docs`
+- Agent — `http://localhost:8002/docs`
+
+**3. Stop the environment**
+```bash
+docker-compose down        # stops containers, preserves RAG vector store
+docker-compose down -v     # stops containers AND wipes the vector store
+```
+
+> Use `down -v` to reset the RAG knowledge base to a clean state between
+> test sessions. Use `down` to preserve any poisoned state across restarts.
+
+---
+
+### Option 2 — Local, single environment (no Docker required)
+
+**Prerequisites:** Python 3.10 or higher
+
+**1. Copy the environment file**
+
+From the repo root:
 ```bash
 cp .env.example .env
-# Add your OPENAI_API_KEY to .env
+```
 
+Open `.env` and set your API key:
+```bash
+OPENAI_API_KEY=your_api_key_here
+MODEL_NAME=gpt-4.1-mini
+```
+
+**2. Create a virtual environment**
+```bash
+python -m venv .venv
+source .venv/bin/activate        # macOS / Linux
+.venv\Scripts\activate           # Windows
+```
+
+**3. Install dependencies**
+```bash
 cd environments/chatbot
 pip install -r requirements.txt
+```
+
+**4. Start the server**
+```bash
 uvicorn app:app --reload
 ```
 
-Open `http://127.0.0.1:8000/docs` — FastAPI Swagger UI for manual
-prompt injection and system prompt extraction testing.
+You should see:
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+```
+
+**5. Open the attack interface**
+
+Go to `http://127.0.0.1:8000/docs` — this opens the FastAPI Swagger UI
+where you can send prompts manually and observe model responses.
+
+You are now ready to run the prompt injection playbook:
+`playbooks/LLM01-prompt-injection.md`
 
 ---
 
