@@ -1,5 +1,8 @@
 # AI-security-training-lab
-A professional AI security training lab for hands-on testing of LLM, RAG, and agent-based systems, with attack playbooks, evidence capture, and reporting workflows.
+
+A professional AI security training lab for hands-on testing of LLM, RAG,
+and agent-based systems — with structured attack playbooks, an evidence
+capture pipeline, and consulting-grade reporting workflows.
 
 This lab focuses on real-world vulnerabilities found in:
 
@@ -7,196 +10,288 @@ This lab focuses on real-world vulnerabilities found in:
 - Retrieval-Augmented Generation (RAG) systems
 - AI Agents and tool-enabled models
 
-The project includes vulnerable AI applications, attack playbooks, testing tools, and evidence collection workflows aligned with the **OWASP Top 10 for LLM Applications** and emerging **AI security best practices**.
+Attack coverage is aligned with the **OWASP Top 10 for LLM Applications
+(2025)** and mapped to **MITRE ATLAS** adversarial technique IDs.
 
-The goal is to provide a **repeatable environment for learning and practicing AI security testing**.
+The goal is a **repeatable, evidence-backed framework** — not a collection
+of prompts. Every attack produces a signed artifact that traces forward to
+a finding report.
+
+---
+
+## Implementation status
+
+| Component | Status | Notes |
+|---|---|---|
+| `environments/chatbot` | ✅ Functional | FastAPI, intentionally vulnerable |
+| `environments/rag-pipeline` | ✅ Functional | LangChain + ChromaDB, named volume |
+| `environments/agent` | ✅ Functional | Tool-enabled, SSRF vector present |
+| `attacks/prompt-injection` | ✅ Functional | Direct, indirect, jailbreak, SPE payloads |
+| `attacks/rag-attacks` | ✅ Functional | Poisoning + context manipulation |
+| `attacks/agent-attacks` | ✅ Functional | Tool abuse + privilege escalation |
+| `tools/fuzzer.py` | ✅ Functional | Runs all payloads.json files |
+| `tools/collect_evidence.py` | ✅ Functional | SHA-256 signing, evidence promotion |
+| `playbooks/` | ✅ Complete | LLM01, LLM03, LLM08 + 2 attack chains |
+| `reports/findings/` | 🔄 In progress | First finding being documented |
 
 ---
 
 ## Repository structure
 ```bash
 AI-security-training-lab/
-├── README.md 
+├── README.md
 ├── LICENSE
 ├── .gitignore
 ├── .env.example
-├── docker-compose.yml # chatbot + rag-pipeline + agent
+├── docker-compose.yml          # chatbot + rag-pipeline + agent
+│                               # lab-internal + lab-external networks
+│                               # rag-vector-store named volume
 │
 ├── environments/
-│ ├── chatbot/
-│ │ ├── app.py
-│ │ ├── Dockerfile
-│ │ ├── requirements.txt
-│ │ ├── prompts/
-│ │ └── memory/ # Bind-mounted JSONL session store
-│ │
-│ ├── rag-pipeline/
-│ │ ├── ingest.py
-│ │ ├── rag_api.py
-│ │ ├── Dockerfile
-│ │ └── requirements.txt
-│ │
-│ └── agent/
-│ ├── agent.py
-│ ├── Dockerfile
-│ ├── requirements.txt
-│ └── tools/ # web_search.py + .schema.json
+│   ├── chatbot/
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   ├── prompts/
+│   │   └── memory/             # Bind-mounted JSONL session store
+│   │
+│   ├── rag-pipeline/
+│   │   ├── ingest.py
+│   │   ├── rag_api.py
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   │
+│   └── agent/
+│       ├── agent.py
+│       ├── Dockerfile
+│       ├── requirements.txt
+│       └── tools/              # tool.py + tool.schema.json pairs
 │
 ├── attacks/
-│ ├── README.md # Schema + ID prefix table (single source of truth)
-│ ├── prompt-injection/
-│ │ ├── payloads.json # Covers: direct, indirect, jailbreak, SPE
-│ │ └── payloads.md
-│ │
-│ ├── rag-attacks/
-│ │ ├── payloads.json
-│ │ └── payloads.md
-│ │
-│ └── agent-attacks/
-│ ├── payloads.json
-│ └── payloads.md
+│   ├── README.md               # Payload schema + ID prefix table
+│   ├── prompt-injection/
+│   │   ├── payloads.json       # Direct, indirect, jailbreak, SPE
+│   │   └── payloads.md
+│   ├── rag-attacks/
+│   │   ├── payloads.json
+│   │   └── payloads.md
+│   └── agent-attacks/
+│       ├── payloads.json
+│       └── payloads.md
 │
 ├── tools/
-│ ├── fuzzer.py # payloads.json → artifacts/results/
-│ └── collect_evidence.py # artifacts/results/ → evidence/transcripts/
+│   ├── fuzzer.py               # payloads.json → artifacts/results/
+│   └── collect_evidence.py     # artifacts/results/ → evidence/transcripts/
 │
 ├── playbooks/
-│ ├── LLM01-prompt-injection.md
-│ ├── LLM03-training-data-poisoning.md
-│ ├── LLM08-excessive-agency.md
-│ └── chains/
-│ ├── chain-01-rag-exfiltration.md
-│ └── chain-02-agent-escalation.md
+│   ├── LLM01-prompt-injection.md
+│   ├── LLM03-training-data-poisoning.md
+│   ├── LLM08-excessive-agency.md
+│   └── chains/
+│       ├── chain-01-rag-exfiltration.md
+│       └── chain-02-agent-escalation.md
 │
 ├── methodology/
-│ └── attack-surface-map.md # OWASP coverage matrix
+│   ├── attack-surface-map.md   # OWASP coverage matrix + NIST AI RMF mapping
+│   ├── threat-model.md
+│   └── rules-of-engagement.md
 │
 ├── artifacts/
-│ └── results/ # Raw run outputs from the fuzzer
+│   └── results/                # Raw fuzzer output — never cited directly in reports
 │
-└── evidence/
-└── transcripts/ # Curated evidence extracted from artifacts
-
+├── evidence/
+│   ├── transcripts/            # SHA-256 signed, promoted by collect_evidence.py
+│   └── screenshots/
+│
+└── reports/
+    ├── templates/
+    │   └── finding-template.md
+    └── findings/               # Completed reports: AI-SEC-YYYY-NNN.md
 ```
+
+---
+
+## Evidence pipeline
+
+Automated output and audit-ready evidence are kept strictly separate:
+```
+attacks/*/payloads.json
+  → tools/fuzzer.py
+  → artifacts/results/          ← raw output, never cited directly
+  → tools/collect_evidence.py   ← SHA-256 hash + metadata header
+  → evidence/transcripts/       ← signed, reportable
+  → reports/findings/           ← cites evidence ID
+```
+
+`collect_evidence.py` is the only mechanism that writes to `evidence/`.
+Raw artifacts stay in `artifacts/results/` until reviewed and promoted.
+
 ---
 
 ## Quickstart
-The quickest way to begin is to clone the repository and run one of the lab environments.
 
-## Clone the repository
+### Clone the repository
 ```bash
-git clone https://github.com/YOUR-USERNAME/AI-security-training-lab.git
+git clone https://github.com/Jeanmatozo/AI-security-training-lab.git
 cd AI-security-training-lab
 ```
-## Local Setup   
-**1. Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-**2. Configure your environment**
-Create a .env file based on the example template.
+
+### Option 1 — Docker (recommended)
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+(macOS / Windows) or Docker Engine (Linux), running before you continue.
+
+**1. Copy and configure the environment file**
 ```bash
 cp .env.example .env
 ```
-**3. Add your OpenAI API Key**
-Edit the .env file and add your API key.
-Example:
+
+Open `.env` and set your API key before starting the containers:
 ```bash
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
 ```
-**4. Run the Vulnerable Chatbot environment**  
-Navigate to the chatbot environment:
-```bash
-cd environments/chatbot
-```
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-Start the server:
-```bash
-uvicorn app:app --reload
-```
-Open your browser and go to(it will open the API interface):
-```bash
-http://127.0.0.1:8000/docs
-```
-  This will launch a vulnerable chatbot environment, a FastAPI interactive Swagger UI,  that can be used to practice prompt injection and system prompt extraction attacks.
 
-## Docker Setup
-The lab can also be run using Docker, which provides a consistent and isolated environment.
-
-This is the recommended approach for security labs.
-
-Start the lab environment
+**2. Build and start all environments**
 ```bash
 docker-compose up --build
 ```
-This will start all configured lab environments including:
-- Vulnerable chatbot
-- RAG pipeline
-- AI agent
-- Admin panel
-- Stop the environment
+
+When all three services are ready you will see lines similar to:
+```
+chatbot      | INFO:     Uvicorn running on http://0.0.0.0:8000
+rag-pipeline | INFO:     Uvicorn running on http://0.0.0.0:8001
+agent        | INFO:     Uvicorn running on http://0.0.0.0:8002
+```
+
+The three lab environments are now running at:
+
+- Chatbot — `http://localhost:8000/docs`
+- RAG pipeline — `http://localhost:8001/docs`
+- Agent — `http://localhost:8002/docs`
+
+**3. Stop the environment**
+```bash
+docker-compose down        # stops containers, preserves RAG vector store
+docker-compose down -v     # stops containers AND wipes the vector store
+```
+
+> Use `down -v` to reset the RAG knowledge base to a clean state between
+> test sessions. Use `down` to preserve any poisoned state across restarts.
 
 ---
-### Lab Topics Covered
-This training lab includes exercises for:   
-- **Prompt Injection** - Direct and indirect prompt injection attacks.   
-- **RAG Exploitation** - Manipulating retrieval pipelines and poisoning documents.   
-- **System Prompt Extraction** - Techniques used to recover hidden system prompts.   
-- **Agent Tool Abuse** - Attacking tool-enabled agents through tool misuse and privilege escalation.   
-- **Multi-Step Attack Chains** - Simulating realistic adversarial workflows across AI systems.   
+
+### Option 2 — Local, single environment (no Docker required)
+
+**Prerequisites:** Python 3.10 or higher
+
+**1. Copy the environment file**
+
+From the repo root:
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set your API key:
+```bash
+OPENAI_API_KEY=your_api_key_here
+MODEL_NAME=gpt-4.1-mini
+```
+
+**2. Create a virtual environment**
+```bash
+python -m venv .venv
+source .venv/bin/activate        # macOS / Linux
+.venv\Scripts\activate           # Windows
+```
+
+**3. Install dependencies**
+```bash
+cd environments/chatbot
+pip install -r requirements.txt
+```
+
+**4. Start the server**
+```bash
+uvicorn app:app --reload
+```
+
+You should see:
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+```
+
+**5. Open the attack interface**
+
+Go to `http://127.0.0.1:8000/docs` — this opens the FastAPI Swagger UI
+where you can send prompts manually and observe model responses.
+
+You are now ready to run the prompt injection playbook:
+`playbooks/LLM01-prompt-injection.md`
 
 ---
-## Tools Used
-This lab uses a combination of modern AI and security tooling.
 
-Core technologies include:
-- Python
-- FastAPI
-- Docker
-- LangChain
-- ChromaDB
-- OpenAI API
+## Running attacks
+```bash
+# Run all prompt injection payloads against the chatbot
+python tools/fuzzer.py \
+  --payloads attacks/prompt-injection/payloads.json \
+  --output   artifacts/results/PI_$(date +%Y%m%d_%H%M%S).json
 
-Security testing utilities include custom scripts for:
-- Prompt fuzzing
-- System prompt extraction
-- RAG poisoning
-- Agent tool enumeration
+# Promote results to signed evidence
+python tools/collect_evidence.py \
+  --input  artifacts/results/PI_20250115_143022.json \
+  --output evidence/transcripts/
+```
 
 ---
-## Contribution Guidelines
-Contributions are welcome and encouraged.
-If you would like to contribute:
-1. Fork the repository
-2. Create a new branch
-3. Make your changes
-4. Commit your changes
-5. Push your branch
-6. Submit a Pull Request
----
-## Responsible Use
-This repository is intended for **educational and defensive security research purposes only**.
 
-All testing should be conducted in controlled environments and with proper authorization.
+## Lab topics covered
 
-Do not use these techniques against systems without explicit permission.
+- **Prompt injection** — direct injection, indirect injection via RAG, jailbreaks
+- **RAG exploitation** — document poisoning, context manipulation, retrieval abuse
+- **Agent tool abuse** — tool misuse, SSRF via HTTP tools, privilege escalation
+- **Multi-step attack chains** — realistic adversarial sequences across environments
 
 ---
+
+## Tools used
+
+| Category | Technology |
+|---|---|
+| Language | Python |
+| API framework | FastAPI |
+| Containerisation | Docker + Docker Compose |
+| LLM orchestration | LangChain |
+| Vector store | ChromaDB |
+| LLM provider | OpenAI API |
+| Attack runner | `tools/fuzzer.py` (custom) |
+| Evidence pipeline | `tools/collect_evidence.py` (custom) |
+
+---
+
+## Responsible use
+
+This repository is intended for **educational and defensive security
+research purposes only**.
+
+All testing must be conducted in isolated, controlled environments with
+explicit authorisation. Do not use these techniques against systems you
+do not own or have permission to test.
+
+---
+
 ## License
 
-This project is licensed under the **MIT License**.
+MIT License — see `LICENSE` for details.
 
-See the LICENSE file for details.
+---
 
 ## Acknowledgements
 
-This project is inspired by research and frameworks from:
-- OWASP Top 10 for LLM Applications
-- AI Red Team practices
-- Security research communities working on AI safety and model robustness
+- [OWASP Top 10 for LLM Applications (2025)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+- [MITRE ATLAS](https://atlas.mitre.org/)
+- [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework))
 
 Built by [jeanmatozo](https://github.com/Jeanmatozo)
