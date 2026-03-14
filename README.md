@@ -33,7 +33,6 @@ a finding report.
 | `tools/collect_evidence.py` | ✅ Functional | SHA-256 signing, evidence promotion |
 | `playbooks/` | ✅ Complete | LLM01, LLM03, LLM08 + 2 attack chains |
 | `reports/findings/` | 🔄 In progress | First finding being documented |
-
 ---
 
 ## Repository structure
