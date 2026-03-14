@@ -40,6 +40,8 @@ def send_payload(payload: dict) -> dict:
         "status_code": None,
         "response_body": None,
         "error_text": None,
+        "verdict": None,
+        "matched_terms": [],
     }
 
     try:
@@ -57,8 +59,21 @@ def send_payload(payload: dict) -> dict:
         except ValueError:
             result["response_body"] = response.text
 
+        response_text = ""
+        if isinstance(result["response_body"], dict):
+            response_text = result["response_body"].get("response", "").lower()
+        elif isinstance(result["response_body"], str):
+            response_text = result["response_body"].lower()
+
+        match_any = payload.get("success_criteria", {}).get("match_any", [])
+        matched = [term for term in match_any if term.lower() in response_text]
+
+        result["verdict"] = "FAIL" if matched else "PASS"
+        result["matched_terms"] = matched
+
     except Exception as e:
         result["error_text"] = str(e)
+        result["verdict"] = "ERROR"
 
     return result
 
