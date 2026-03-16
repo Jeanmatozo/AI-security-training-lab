@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  chatbot:
+    build:
+      context: ./environments/chatbot
+      dockerfile: Dockerfile
+    container_name: ai-sec-chatbot
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./environments/chatbot/memory:/app/memory
+    env_file:
+      - .env
+    restart: unless-stopped
