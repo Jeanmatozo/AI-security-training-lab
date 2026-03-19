@@ -1,7 +1,7 @@
 # AI-security-training-lab
 
-A professional AI security training lab for hands-on testing of LLM, RAG,
-and agent-based systems — with structured attack playbooks, an evidence
+This is a professional AI security training lab for hands-on testing of LLM, RAG,
+and agent-based systems with structured attack playbooks, an evidence
 capture pipeline, and consulting-grade reporting workflows.
 
 This lab focuses on real-world vulnerabilities found in:
@@ -10,13 +10,31 @@ This lab focuses on real-world vulnerabilities found in:
 - Retrieval-Augmented Generation (RAG) systems
 - AI Agents and tool-enabled models
 
-Attack coverage is aligned with the **OWASP Top 10 for LLM Applications
-(2025)** and mapped to **MITRE ATLAS** adversarial technique IDs.
+Attack coverage is aligned with the **[OWASP Top 10 for LLM Applications (2025)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)** and mapped to **[MITRE ATLAS](https://atlas.mitre.org/)** adversarial technique IDs.
 
-The goal is a **repeatable, evidence-backed framework** — not a collection
+The goal is a **repeatable, evidence-backed framework**, not a collection
 of prompts. Every attack produces a signed artifact that traces forward to
 a finding report.
 
+~~~bash
+environments → attacks → tools → artifacts → evidence → reports
+                         ↘ playbooks
+                         ↘ methodology
+
+~~~
+
+---
+ 
+## Where to Start
+ 
+| I want to...                          | Go to                                     |
+|---------------------------------------|-------------------------------------------|
+| Get the lab running                   | [Quickstart](#quickstart) (below)         |
+| Run my first attack                   | `playbooks/LLM01-prompt-injection.md`     |
+| Understand the full attack pipeline   | `playbooks/README.md`                     |
+| Read the threat model                 | `methodology/threat-model.md`             |
+| Document a finding                    | `reports/templates/finding-template.md`   |
+ 
 ---
 
 ## Implementation status
@@ -135,7 +153,9 @@ git clone https://github.com/Jeanmatozo/AI-security-training-lab.git
 cd AI-security-training-lab
 ```
 
-### Option 1 — Docker (recommended)
+### Option A — Docker (recommended)
+Best for running all three environments simultaneously with consistent,
+reproducible behaviour across machines.
 
 **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 (macOS / Windows) or Docker Engine (Linux), running before you continue.
@@ -180,19 +200,26 @@ docker-compose down -v     # stops containers AND wipes the vector store
 
 ---
 
-### Option 2 — Local, single environment (no Docker required)
+### Option B — Local, single environment (no Docker required)
+Best for inspecting code behaviour, debugging vulnerabilities, and iterating
+on attack scenarios before moving to the full Docker setup.
 
 **Prerequisites:** Python 3.10 or higher
+> **Tip:** Start here with `environments/chatbot` to sanity-check the raw
+> environment and understand the code. Once comfortable, move to Option A
+> for the RAG and Agent environments — those involve more moving parts
+> (vector databases, inter-service networking) that are much harder to
+> manage manually.
 
 **1. Copy the environment file**
 
-From the repo root:
 ```bash
 cp .env.example .env
 ```
-
+ 
 Open `.env` and set your API key:
-```bash
+ 
+```env
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
 ```
@@ -231,40 +258,26 @@ You are now ready to run the prompt injection playbook:
 
 ---
 
-## Running attacks
-```bash
-# Run all prompt injection payloads against the chatbot
-python tools/fuzzer.py \
-  --payloads attacks/prompt-injection/payloads.json \
-  --output   artifacts/results/PI_$(date +%Y%m%d_%H%M%S).json
-
-# Promote results to signed evidence
-python tools/collect_evidence.py \
-  --input  artifacts/results/PI_20250115_143022.json \
-  --output evidence/transcripts/
-```
-
+## Lab Topics
+ 
+| Topic | Coverage |
+|-------|----------|
+| Prompt injection | Direct injection, indirect injection via RAG, jailbreaks, system prompt extraction |
+| RAG exploitation | Document poisoning, context manipulation, retrieval abuse |
+| Agent tool abuse | Tool misuse, SSRF via HTTP tools, privilege escalation |
+| Multi-step attack chains | Realistic adversarial sequences across environments |
+ 
 ---
-
-## Lab topics covered
-
-- **Prompt injection** — direct injection, indirect injection via RAG, jailbreaks
-- **RAG exploitation** — document poisoning, context manipulation, retrieval abuse
-- **Agent tool abuse** — tool misuse, SSRF via HTTP tools, privilege escalation
-- **Multi-step attack chains** — realistic adversarial sequences across environments
-
----
-
-## Tools used
-
+## Stack
+ 
 | Category | Technology |
-|---|---|
-| Language | Python |
+|----------|------------|
+| Language | Python 3.10+ |
 | API framework | FastAPI |
 | Containerisation | Docker + Docker Compose |
 | LLM orchestration | LangChain |
 | Vector store | ChromaDB |
-| LLM provider | OpenAI API |
+| LLM provider | OpenAI API (`gpt-4.1-mini`) |
 | Attack runner | `tools/fuzzer.py` (custom) |
 | Evidence pipeline | `tools/collect_evidence.py` (custom) |
 
@@ -280,7 +293,6 @@ explicit authorisation. Do not use these techniques against systems you
 do not own or have permission to test.
 
 ---
-
 ## License
 
 MIT License — see `LICENSE` for details.
@@ -291,6 +303,6 @@ MIT License — see `LICENSE` for details.
 
 - [OWASP Top 10 for LLM Applications (2025)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 - [MITRE ATLAS](https://atlas.mitre.org/)
-- [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework))
+- [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
 
 Built by [jeanmatozo](https://github.com/Jeanmatozo)
