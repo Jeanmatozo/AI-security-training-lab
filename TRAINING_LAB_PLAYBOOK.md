@@ -316,25 +316,19 @@ The fuzzer stores the judge's verdict, confidence score (0–1), and rationale i
 ### Run all prompt injection payloads
 
 ```bash
-python tools/fuzzer.py \
-  --payloads attacks/prompt-injection/payloads.json \
-  --output   artifacts/results/PI_$(date +%Y%m%d_%H%M%S).json
+python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/prompt_injection_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
 ```
 
 ### Run RAG attack payloads
 
 ```bash
-python tools/fuzzer.py \
-  --payloads attacks/rag-attacks/payloads.json \
-  --output   artifacts/results/RAG_$(date +%Y%m%d_%H%M%S).json
+python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/RAG_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
 ```
 
 ### Run agent attack payloads
 
 ```bash
-python tools/fuzzer.py \
-  --payloads attacks/agent-attacks/payloads.json \
-  --output   artifacts/results/AGENT_$(date +%Y%m%d_%H%M%S).json
+python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/AGENT_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
 ```
 
 The fuzzer will:
@@ -412,7 +406,7 @@ Raw artifacts stay in `artifacts/results/` until reviewed and manually promoted.
 
 ```bash
 python tools/collect_evidence.py \
-  --input  artifacts/results/PI_20250115_143022.json \
+  --input  artifacts/<results_file>.json \
   --output evidence/transcripts/
 ```
 
