@@ -50,7 +50,7 @@ environments → attacks → tools → artifacts → evidence → reports
 | `tools/fuzzer.py` | ✅ Functional | Runs all payloads.json files |
 | `tools/collect_evidence.py` | ✅ Functional | SHA-256 signing, evidence promotion |
 | `playbooks/` | ✅ Complete | LLM01, LLM03, LLM08 + 2 attack chains |
-| `reports/findings/` | 🔄 In progress | First finding being documented |
+| `reports/findings/` | ✅ Complete | AI-SEC-2026-001, 002, 003 documented |
 ---
 
 ## Repository structure
