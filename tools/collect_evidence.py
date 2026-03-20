@@ -27,25 +27,41 @@ def detect_category(results: list) -> str:
     if not results:
         return "unknown"
 
-    first_id = str(results[0].get("payload_id", ""))
-    if first_id.startswith("PI-"):
+    payload_ids = [str(item.get("payload_id", "")).strip().upper() for item in results]
+
+    has_pi = any(pid.startswith("PI-") for pid in payload_ids)
+    has_rag = any(pid.startswith("RAG-") for pid in payload_ids)
+    has_ag = any(pid.startswith("AG-") for pid in payload_ids)
+
+    matched = sum([has_pi, has_rag, has_ag])
+
+    if matched == 0:
+        return "unknown"
+
+    if matched > 1:
+        raise ValueError(
+            f"Mixed payload categories found in artifact: {payload_ids}"
+        )
+
+    if has_pi:
         return "prompt-injection"
-    if first_id.startswith("RAG-"):
+    if has_rag:
         return "rag-attacks"
-    if first_id.startswith("AG-"):
+    if has_ag:
         return "agent-attacks"
+
     return "unknown"
 
 
 def next_evidence_id(output_dir: Path, category: str) -> str:
     prefix_map = {
-        "prompt-injection": "EVID-PI",
-        "rag-attacks": "EVID-RAG",
-        "agent-attacks": "EVID-AG",
-        "unknown": "EVID-UNK",
+        "prompt-injection": "PI",
+        "rag-attacks":      "RAG",
+        "agent-attacks":    "AG",
+        "unknown":          "UNK",
     }
 
-    prefix = prefix_map.get(category, "EVID-UNK")
+    prefix = prefix_map.get(category, "UNK")
     today = datetime.now(timezone.utc).strftime("%Y%m%d")
 
     existing = sorted(output_dir.glob(f"{prefix}-{today}-*.md"))
@@ -143,6 +159,9 @@ def main():
     results = load_results(input_file)
     sha256 = compute_sha256(input_file)
     category = detect_category(results)
+
+    print(f"Detected category: {category}")
+
     evidence_id = next_evidence_id(output_dir, category)
 
     transcript = build_transcript(

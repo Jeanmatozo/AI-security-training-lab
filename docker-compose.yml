@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   chatbot:
     build:
@@ -12,4 +10,23 @@ services:
       - ./environments/chatbot/memory:/app/memory
     env_file:
       - .env
-    restart: unless-stopped
+
+  rag-pipeline:
+    build:
+      context: ./environments/rag-pipeline
+      dockerfile: Dockerfile
+    container_name: ai-sec-rag
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+
+  agent:
+    build:
+      context: ./environments/agent
+      dockerfile: Dockerfile
+    container_name: ai-sec-agent
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env

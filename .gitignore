@@ -10,4 +10,4 @@ __pycache__/
 artifacts/results/*
 
 # allow directory to exist
-!artifacts/results/.gitkeep
+!artifacts/results/.gitkeep"log.txt" 
