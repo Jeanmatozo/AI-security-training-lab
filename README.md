@@ -68,12 +68,9 @@ AI-security-training-lab/
 │   ├── chatbot/
 │   │   ├── app.py
 │   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── prompts/
-│   │   └── memory/             # Bind-mounted JSONL session store
+│   │   └── requirements.txt
 │   │
 │   ├── rag-pipeline/
-│   │   ├── ingest.py
 │   │   ├── rag_api.py
 │   │   ├── Dockerfile
 │   │   └── requirements.txt
@@ -81,8 +78,7 @@ AI-security-training-lab/
 │   └── agent/
 │       ├── agent.py
 │       ├── Dockerfile
-│       ├── requirements.txt
-│       └── tools/              # tool.py + tool.schema.json pairs
+│       └── requirements.txt
 │
 ├── attacks/
 │   ├── README.md               # Payload schema + ID prefix table

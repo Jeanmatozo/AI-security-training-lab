@@ -532,39 +532,6 @@ Sequence: Inject instructions via indirect injection → hijack tool call → es
 
 ---
 
-## Defensive Controls (Blue Team Layer)
-
-After documenting a finding, enable the corresponding defense and re-run the attack
-to confirm remediation. The workflow is:
-
-```
-run attack → document finding → enable defense → re-run attack → confirm fix
-```
-
-Defense modules live alongside each environment:
-
-```
-environments/
-  chatbot/
-    defenses/
-      input_sanitizer.py     # prompt injection guards
-      output_filter.py       # response classifier
-  rag-pipeline/
-    defenses/
-      source_validator.py    # document provenance checks
-  agent/
-    defenses/
-      tool_scope_enforcer.py # restricts tool invocation to declared scope
-```
-
-To start an environment with defenses enabled, use the `--hardened` profile:
-
-```bash
-docker-compose --profile hardened up --build
-```
-
----
-
 ## Reproducibility Principles
 
 - **Stateless environments** — each run starts from a known baseline
