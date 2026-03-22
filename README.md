@@ -24,9 +24,9 @@ environments → attacks → tools → artifacts → evidence → reports
 ~~~
 
 ---
- 
+
 ## Where to Start
- 
+
 | I want to...                          | Go to                                     |
 |---------------------------------------|-------------------------------------------|
 | Get the lab running                   | [Quickstart](#quickstart) (below)         |
@@ -34,7 +34,7 @@ environments → attacks → tools → artifacts → evidence → reports
 | Understand the full attack pipeline   | `playbooks/README.md`                     |
 | Read the threat model                 | `methodology/threat-model.md`             |
 | Document a finding                    | `reports/templates/finding-template.md`   |
- 
+
 ---
 
 ## Implementation status
@@ -48,12 +48,16 @@ environments → attacks → tools → artifacts → evidence → reports
 | `attacks/rag-attacks` | ✅ Functional | Poisoning + context manipulation |
 | `attacks/agent-attacks` | ✅ Functional | Tool abuse + privilege escalation |
 | `tools/fuzzer.py` | ✅ Functional | Runs all payloads.json files |
-| `tools/collect_evidence.py` | ✅ Functional | SHA-256 signing, evidence promotion |
+| `tools/evidence_promoter.py` | ✅ Functional | SHA-256 + Ed25519 signing, evidence promotion |
+| `tools/keygen.py` | ✅ Functional | Ed25519 keypair generation |
+| `tools/verify_evidence.py` | ✅ Functional | Transcript integrity + signature verification |
 | `playbooks/` | ✅ Complete | LLM01, LLM03, LLM08 + 2 attack chains |
 | `reports/findings/` | ✅ Complete | AI-SEC-2026-001, 002, 003 documented |
+
 ---
 
 ## Repository structure
+
 ```bash
 AI-security-training-lab/
 ├── README.md
@@ -76,7 +80,7 @@ AI-security-training-lab/
 │   │   └── requirements.txt
 │   │
 │   └── agent/
-│       ├── agent.py
+│       ├── agent_api.py
 │       ├── Dockerfile
 │       └── requirements.txt
 │
@@ -94,7 +98,14 @@ AI-security-training-lab/
 │
 ├── tools/
 │   ├── fuzzer.py               # payloads.json → artifacts/results/
-│   └── collect_evidence.py     # artifacts/results/ → evidence/transcripts/
+│   ├── evidence_promoter.py    # artifacts/results/ → evidence/transcripts/
+│   ├── keygen.py               # Ed25519 keypair generation (one-time)
+│   └── verify_evidence.py      # transcript integrity + signature verification
+│
+├── keys/                       # signing_key.pem is .gitignored
+│   ├── signing_key.pem         # ← never commit
+│   ├── signing_key.pub.pem
+│   └── signing_key.pub.sha256
 │
 ├── playbooks/
 │   ├── LLM01-prompt-injection.md
@@ -113,8 +124,7 @@ AI-security-training-lab/
 │   └── results/                # Raw fuzzer output — never cited directly in reports
 │
 ├── evidence/
-│   ├── transcripts/            # SHA-256 signed, promoted by collect_evidence.py
-│   └── screenshots/
+│   └── transcripts/            # SHA-256 + Ed25519 signed, promoted by evidence_promoter.py
 │
 └── reports/
     ├── templates/
@@ -126,18 +136,25 @@ AI-security-training-lab/
 
 ## Evidence pipeline
 
-Automated output and audit-ready evidence are kept strictly separate:
+Raw artifacts are never cited directly in reports. They must be promoted
+through the evidence pipeline first:
+
 ```
 attacks/*/payloads.json
   → tools/fuzzer.py
   → artifacts/results/          ← raw output, never cited directly
-  → tools/collect_evidence.py   ← SHA-256 hash + metadata header
-  → evidence/transcripts/       ← signed, reportable
+  → tools/evidence_promoter.py  ← SHA-256 hashed + Ed25519 signed
+  → evidence/transcripts/       ← tamper-evident, reportable
   → reports/findings/           ← cites evidence ID
 ```
 
-`collect_evidence.py` is the only mechanism that writes to `evidence/`.
-Raw artifacts stay in `artifacts/results/` until reviewed and promoted.
+Each promoted transcript is integrity-protected at two levels: a SHA-256
+hash of both the source artifact and the transcript file, and an optional
+Ed25519 detached signature. All evidence is indexed in
+`evidence/transcripts/MANIFEST.json`. Use `tools/verify_evidence.py` to
+confirm integrity before citing a transcript in a report.
+
+See `playbooks/README.md` for full pipeline commands.
 
 ---
 
@@ -212,9 +229,9 @@ on attack scenarios before moving to the full Docker setup.
 ```bash
 cp .env.example .env
 ```
- 
+
 Open `.env` and set your API key:
- 
+
 ```env
 OPENAI_API_KEY=your_api_key_here
 MODEL_NAME=gpt-4.1-mini
@@ -255,17 +272,18 @@ You are now ready to run the prompt injection playbook:
 ---
 
 ## Lab Topics
- 
+
 | Topic | Coverage |
 |-------|----------|
 | Prompt injection | Direct injection, indirect injection via RAG, jailbreaks, system prompt extraction |
 | RAG exploitation | Document poisoning, context manipulation, retrieval abuse |
 | Agent tool abuse | Tool misuse, SSRF via HTTP tools, privilege escalation |
 | Multi-step attack chains | Realistic adversarial sequences across environments |
- 
+
 ---
+
 ## Stack
- 
+
 | Category | Technology |
 |----------|------------|
 | Language | Python 3.10+ |
@@ -275,7 +293,8 @@ You are now ready to run the prompt injection playbook:
 | Vector store | ChromaDB |
 | LLM provider | OpenAI API (`gpt-4.1-mini`) |
 | Attack runner | `tools/fuzzer.py` (custom) |
-| Evidence pipeline | `tools/collect_evidence.py` (custom) |
+| Evidence pipeline | `tools/evidence_promoter.py` + `tools/verify_evidence.py` (custom) |
+| Signing | Ed25519 via `cryptography` library |
 
 ---
 
@@ -289,6 +308,7 @@ explicit authorisation. Do not use these techniques against systems you
 do not own or have permission to test.
 
 ---
+
 ## License
 
 MIT License — see `LICENSE` for details.

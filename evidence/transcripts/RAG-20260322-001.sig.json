@@ -1,0 +1,14 @@
+{
+  "evidence_id": "RAG-20260322-001",
+  "transcript_file": "RAG-20260322-001.md",
+  "transcript_sha256": "3529eebc8d9033f423a128c8bb7fa6ffb0b57737dd23d303baa79dce7d5d0f6c",
+  "source_artifact": "fuzz_results_signed.json",
+  "source_sha256": "7dbbfcda3ef34c06351a4ee3798c3e636a0ee01bcdd0edfd4a411a6b1160675c",
+  "category": "rag-attacks",
+  "promoted_at": "2026-03-22T02:38:40.957584+00:00",
+  "signature_algorithm": "Ed25519",
+  "signed_at": "2026-03-22T02:38:41.035016+00:00",
+  "public_key_sha256": "9f2d4826b3df126fb1329b33dfde095b283e11c47b5aff81f425d2773dc9145f",
+  "signature_base64": "01ExaGPXcZA7JzeeTDluF2OZ46nWmVw32JUVocQIKtHQtdu+Mwjylb2YK5yvNqRs9kBeaAKh+5J7u/WCYypTAg==",
+  "signed_content": "transcript_file_bytes"
+}

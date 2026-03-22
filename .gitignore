@@ -10,4 +10,7 @@ __pycache__/
 artifacts/results/*
 
 # allow directory to exist
-!artifacts/results/.gitkeep"log.txt" 
+!artifacts/results/.gitkeep
+
+# Private signing key (DO NOT COMMIT)
+keys/signing_key.pem

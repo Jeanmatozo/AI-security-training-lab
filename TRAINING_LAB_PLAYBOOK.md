@@ -20,9 +20,9 @@ The goal is to create a **reproducible AI security testing framework** aligned w
 AI-security-training-lab/
 ├── environments/        # vulnerable AI systems (chatbot, rag-pipeline, agent)
 ├── attacks/             # attack payload definitions
-├── tools/               # automation tools (fuzzer, evidence collector)
+├── tools/               # automation tools (fuzzer, evidence pipeline)
 ├── artifacts/           # raw execution logs (never cited directly)
-├── evidence/            # validated, SHA-256 signed attack transcripts
+├── evidence/            # validated, tamper-evident signed attack transcripts
 ├── reports/             # human security finding reports
 ├── playbooks/           # step-by-step operator guides  ← you are here
 └── methodology/         # testing frameworks and threat models
@@ -313,22 +313,28 @@ The fuzzer stores the judge's verdict, confidence score (0–1), and rationale i
 
 ## Running Attacks
 
-### Run all prompt injection payloads
+### Run prompt injection payloads
 
 ```bash
-python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/prompt_injection_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
+python tools/fuzzer.py \
+  --payloads attacks/prompt-injection/payloads.json \
+  --output   artifacts/results/PI_$(date +%Y%m%d_%H%M%S).json
 ```
 
 ### Run RAG attack payloads
 
 ```bash
-python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/RAG_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
+python tools/fuzzer.py \
+  --payloads attacks/rag-attacks/payloads.json \
+  --output   artifacts/results/RAG_$(date +%Y%m%d_%H%M%S).json
 ```
 
 ### Run agent attack payloads
 
 ```bash
-python tools/fuzzer.py --payloads attacks/agent-attacks/payloads.json --output artifacts/results/AGENT_%DATE:~-4%%DATE:~4,2%%DATE:~7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.json
+python tools/fuzzer.py \
+  --payloads attacks/agent-attacks/payloads.json \
+  --output   artifacts/results/AGENT_$(date +%Y%m%d_%H%M%S).json
 ```
 
 The fuzzer will:
@@ -369,7 +375,7 @@ Each artifact includes:
 | `response_text` | Normalised lowercase response used for matching |
 | `status_code` | HTTP status code from the target environment |
 | `verdict` | Internal: `VULNERABLE` / `SAFE` / `VETOED` / `ERROR` |
-| `pass_fail` | Pipeline alias: `PASS` or `FAIL` — use this field in `collect_evidence.py` |
+| `pass_fail` | Pipeline alias: `PASS` or `FAIL` — use this field in `evidence_promoter.py` |
 | `matched_any` | List of `match_any` keywords found in the response |
 | `matched_none` | List of `match_none` veto terms found in the response |
 | `matched_indicators` | Combined list of keyword hits and regex flags |
@@ -393,35 +399,39 @@ Each artifact includes:
 ```
 attacks/*/payloads.json
   → tools/fuzzer.py
-  → artifacts/results/          ← raw output, unverified
-  → tools/collect_evidence.py   ← SHA-256 hash + metadata header added
-  → evidence/transcripts/       ← signed, reportable
-  → reports/findings/           ← cites evidence ID (e.g. EV-2025-042)
+  → artifacts/results/            ← raw output, unverified
+  → tools/evidence_promoter.py    ← SHA-256 hashed + Ed25519 signed
+  → evidence/transcripts/         ← tamper-evident, reportable
+  → reports/findings/             ← cites evidence ID
 ```
 
-`collect_evidence.py` is the **only mechanism** that writes to `evidence/`.
-Raw artifacts stay in `artifacts/results/` until reviewed and manually promoted.
+`tools/evidence_promoter.py` is the **only mechanism** that writes to `evidence/`.
 
-### Promote artifacts to signed evidence
+### One-time setup — generate signing keys
 
 ```bash
-python tools/collect_evidence.py \
-  --input  artifacts/<results_file>.json \
-  --output evidence/transcripts/
+python tools/keygen.py --out keys/
+echo "keys/signing_key.pem" >> .gitignore
 ```
 
-Each transcript receives:
+### Promote and sign evidence
 
-| Field | Description |
-|-------|-------------|
-| `evidence_id` | Unique ID, e.g. `EV-2025-042` |
-| `sha256` | Hash of the raw artifact |
-| `attack_id` | Source payload ID |
-| `payload` | Full attack payload definition |
-| `request` / `response` | HTTP exchange |
-| `verdict` | Confirmed `PASS` / `FAIL` (sourced from `pass_fail` field in artifact) |
-| `timestamp` | Promotion time (ISO 8601) |
-| `reproduction_steps` | Step-by-step replication guide |
+```bash
+python tools/evidence_promoter.py \
+  --input       artifacts/results/<fuzz_results>.json \
+  --output      evidence/transcripts/ \
+  --signing-key keys/signing_key.pem
+```
+
+### Verify integrity before citing in a report
+
+```bash
+python tools/verify_evidence.py \
+  --all        evidence/transcripts/ \
+  --public-key keys/signing_key.pub.pem
+```
+
+All checks must return `PASS` before a transcript is cited in a finding report.
 
 ---
 
@@ -537,7 +547,8 @@ Sequence: Inject instructions via indirect injection → hijack tool call → es
 - **Stateless environments** — each run starts from a known baseline
 - **Repeatable payloads** — payload files are version-controlled
 - **Automated artifact capture** — fuzzer writes structured JSON artifacts
-- **SHA-256 signed evidence** — `collect_evidence.py` is the single promotion path
+- **Tamper-evident evidence** — SHA-256 hashing + Ed25519 signing via `evidence_promoter.py`
+- **Verifiable chain of custody** — `verify_evidence.py` confirms integrity at any point
 - **Evidence-backed reporting** — every finding cites a specific evidence ID
 
 ---
@@ -549,7 +560,8 @@ Sequence: Inject instructions via indirect injection → hijack tool call → es
 [ ] Payloads executed (fuzzer run; artifacts in artifacts/results/)
 [ ] Artifacts reviewed (VULNERABLE / SAFE / VETOED / ERROR verdicts and pass_fail inspected)
 [ ] VETOED results triaged manually before promotion
-[ ] Evidence created (PASS artifacts promoted via collect_evidence.py using pass_fail field)
+[ ] Evidence promoted (evidence_promoter.py with --signing-key)
+[ ] Evidence verified (verify_evidence.py --all returns PASS before citing in reports)
 [ ] Findings documented (reports/findings/AI-SEC-YYYY-NNN.md created)
 [ ] Defenses tested (hardened profile re-run; finding confirmed mitigated or open)
 ```
@@ -565,22 +577,32 @@ cd AI-security-training-lab
 cp .env.example .env
 # edit .env: set OPENAI_API_KEY, MODEL_NAME, JUDGE_MODEL, JUDGE_BASE_URL
 
-# 2. Start all environments
+# 2. Generate signing keys (one-time)
+python tools/keygen.py --out keys/
+echo "keys/signing_key.pem" >> .gitignore
+
+# 3. Start all environments
 docker-compose up --build
 
-# 3. Run prompt injection attacks
+# 4. Run prompt injection attacks
 python tools/fuzzer.py \
   --payloads attacks/prompt-injection/payloads.json \
   --output   artifacts/results/PI_$(date +%Y%m%d_%H%M%S).json
 
-# 4. Promote PASS artifacts to evidence (filter by pass_fail field)
-python tools/collect_evidence.py \
-  --input  artifacts/results/PI_<timestamp>.json \
-  --output evidence/transcripts/
+# 5. Promote to signed evidence
+python tools/evidence_promoter.py \
+  --input       artifacts/results/PI_<timestamp>.json \
+  --output      evidence/transcripts/ \
+  --signing-key keys/signing_key.pem
 
-# 5. Document findings
-# Copy reports/templates/finding-template.md → reports/findings/AI-SEC-2025-001.md
-# Fill in all sections; reference evidence IDs from step 4
+# 6. Verify integrity
+python tools/verify_evidence.py \
+  --all        evidence/transcripts/ \
+  --public-key keys/signing_key.pub.pem
+
+# 7. Document findings
+# Copy reports/templates/finding-template.md → reports/findings/AI-SEC-2026-001.md
+# Fill in all sections; reference evidence IDs from step 5
 ```
 
 ---
@@ -590,7 +612,9 @@ python tools/collect_evidence.py \
 | Tool | Input | Output | Purpose |
 |------|-------|--------|---------|
 | `tools/fuzzer.py` | `attacks/*/payloads.json` | `artifacts/results/*.json` | Executes payloads; keyword + LLM judge evaluation; writes `verdict` + `pass_fail` |
-| `tools/collect_evidence.py` | `artifacts/results/*.json` | `evidence/transcripts/*.json` | SHA-256 signs and promotes artifacts; filter by `pass_fail` field |
+| `tools/keygen.py` | `--out <dir>` | `signing_key.pem`, `.pub.pem`, `.pub.sha256` | Generate Ed25519 keypair (one-time setup) |
+| `tools/evidence_promoter.py` | `artifacts/results/*.json` | `evidence/transcripts/*.md` + `.sig.json` + `MANIFEST.json` | SHA-256 hash + Ed25519 sign + promote artifacts |
+| `tools/verify_evidence.py` | `evidence/transcripts/*.md` | Console pass/fail per check | Verify transcript integrity and signature |
 
 ---
 
@@ -606,7 +630,8 @@ python tools/collect_evidence.py \
 | LLM provider | OpenAI API (`gpt-4.1-mini`) |
 | LLM judge | OpenAI API via `JUDGE_MODEL` / `JUDGE_BASE_URL` env vars |
 | Attack runner | `tools/fuzzer.py` (custom) — `keyword`, `llm_judge`, `hybrid` modes |
-| Evidence pipeline | `tools/collect_evidence.py` (custom) |
+| Evidence pipeline | `tools/evidence_promoter.py` + `tools/verify_evidence.py` (custom) |
+| Signing | Ed25519 via `cryptography` library |
 
 ---
 
@@ -633,15 +658,16 @@ See `methodology/rules-of-engagement.md` for full scope and data handling rules.
 ## End-to-End Workflow
 
 ```
-1. Start environment       docker-compose up --build
-2. Verify environment      POST /chat → sanity check
-3. Execute attacks         tools/fuzzer.py
-4. Review artifacts        artifacts/results/ (check verdict + pass_fail)
-5. Triage VETOED results   manual review before promotion
-6. Promote to evidence     tools/collect_evidence.py (filter by pass_fail=PASS)
-7. Document findings       reports/findings/AI-SEC-YYYY-NNN.md
-8. Test defenses           docker-compose --profile hardened up
-9. Confirm remediation     re-run fuzzer; verify SAFE/FAIL on previously passing attacks
+1.  Start environment       docker-compose up --build
+2.  Verify environment      POST /chat → sanity check
+3.  Execute attacks         tools/fuzzer.py
+4.  Review artifacts        artifacts/results/ (check verdict + pass_fail)
+5.  Triage VETOED results   manual review before promotion
+6.  Promote to evidence     tools/evidence_promoter.py --signing-key keys/signing_key.pem
+7.  Verify integrity        tools/verify_evidence.py --all (all checks must PASS)
+8.  Document findings       reports/findings/AI-SEC-YYYY-NNN.md
+9.  Test defenses           docker-compose --profile hardened up
+10. Confirm remediation     re-run fuzzer; verify SAFE/FAIL on previously passing attacks
 ```
 
 Built by [jeanmatozo](https://github.com/Jeanmatozo)
